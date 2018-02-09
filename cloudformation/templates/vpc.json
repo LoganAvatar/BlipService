@@ -1,0 +1,665 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This builds VPC and Subnets",
+  "Resources": {
+    "VPC-BlipApp": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "172.31.0.0/16",
+        "InstanceTenancy": "default",
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true"
+      }
+    },
+    "Subnet-1e": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.64.0/20",
+        "AvailabilityZone": "us-east-1e",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "Subnet-1b": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.80.0/20",
+        "AvailabilityZone": "us-east-1b",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "Subnet-1d": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.32.0/20",
+        "AvailabilityZone": "us-east-1d",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "Subnet-1c": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.16.0/20",
+        "AvailabilityZone": "us-east-1c",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "Subnet-1a": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.0.0/20",
+        "AvailabilityZone": "us-east-1a",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Public Subnet"
+          }
+        ]
+      }
+    },
+    "Subnet-1f": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "172.31.48.0/20",
+        "AvailabilityZone": "us-east-1f",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+      }
+    },
+    "DHCPOpts": {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainName": "ec2.internal",
+        "DomainNameServers": [
+          "AmazonProvidedDNS"
+        ]
+      }
+    },
+    "NetACLS": {
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "RouteTable-Private": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "RouteTable-Public": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Public Route Table"
+          }
+        ]
+      }
+    },
+    "ElasticIP-CloudBuilder": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "tableBlips": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "blipid",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "username",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "blipid",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        },
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "username-blipid-index",
+            "KeySchema": [
+              {
+                "AttributeName": "username",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "blipid",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": "5",
+              "WriteCapacityUnits": "5"
+            }
+          }
+        ]
+      }
+    },
+    "s3blipservice": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        }
+      }
+    },
+    "s3codepipelineuseast1324635093477": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        }
+      }
+    },
+    "topicdynamodb": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "dynamodb"
+      }
+    },
+    "sgBlipBuilderInternet": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Internet connectivity for Blip builder",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "sgdefault": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "default VPC security group",
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        }
+      }
+    },
+    "dbsgdefault": {
+      "Type": "AWS::RDS::DBSecurityGroup",
+      "Properties": {
+        "GroupDescription": "default"
+      }
+    },
+    "snspolicydynamodb": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "Topics": [
+          {
+            "Ref": "topicdynamodb"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Id": "__default_policy_ID",
+          "Statement": [
+            {
+              "Sid": "__default_statement_ID",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": [
+                "SNS:GetTopicAttributes",
+                "SNS:SetTopicAttributes",
+                "SNS:AddPermission",
+                "SNS:RemovePermission",
+                "SNS:DeleteTopic",
+                "SNS:Subscribe",
+                "SNS:ListSubscriptionsByTopic",
+                "SNS:Publish",
+                "SNS:Receive"
+              ],
+              "Resource": {
+                "Ref": "topicdynamodb"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceOwner": "122974205253"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "s3policycodepipelineuseast1324635093477": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "s3codepipelineuseast1324635093477"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Id": "SSEAndSSLPolicy",
+          "Statement": [
+            {
+              "Sid": "DenyUnEncryptedObjectUploads",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    "codepipeline-us-east-",
+                    "1-324635093477/*"
+                  ]
+                ]
+              },
+              "Condition": {
+                "StringNotEquals": {
+                  "s3:x-amz-server-side-encryption": "aws:kms"
+                }
+              }
+            },
+            {
+              "Sid": "DenyInsecureConnections",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    "codepipeline-us-east-",
+                    "1-324635093477/*"
+                  ]
+                ]
+              },
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "alarmBlipsReadCapacityUnitsLimitBasicAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": "5",
+        "MetricName": "ConsumedReadCapacityUnits",
+        "Namespace": "AWS/DynamoDB",
+        "Period": "60",
+        "Statistic": "Sum",
+        "Threshold": "240.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:122974205253:dynamodb"
+        ],
+        "Dimensions": [
+          {
+            "Name": "TableName",
+            "Value": "Blips"
+          }
+        ]
+      }
+    },
+    "alarmBlipsUserNameBlipIdindexReadCapacityUnitsLimitBasicAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": "60",
+        "MetricName": "ConsumedReadCapacityUnits",
+        "Namespace": "AWS/DynamoDB",
+        "Period": "60",
+        "Statistic": "Sum",
+        "Threshold": "240.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:122974205253:dynamodb"
+        ],
+        "Dimensions": [
+          {
+            "Name": "TableName",
+            "Value": "Blips"
+          },
+          {
+            "Name": "GlobalSecondaryIndexName",
+            "Value": "UserName-BlipId-index"
+          }
+        ]
+      }
+    },
+    "alarmBlipsUserNameBlipIdindexWriteCapacityUnitsLimitBasicAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": "60",
+        "MetricName": "ConsumedWriteCapacityUnits",
+        "Namespace": "AWS/DynamoDB",
+        "Period": "60",
+        "Statistic": "Sum",
+        "Threshold": "240.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:122974205253:dynamodb"
+        ],
+        "Dimensions": [
+          {
+            "Name": "TableName",
+            "Value": "Blips"
+          },
+          {
+            "Name": "GlobalSecondaryIndexName",
+            "Value": "UserName-BlipId-index"
+          }
+        ]
+      }
+    },
+    "alarmBlipsWriteCapacityUnitsLimitBasicAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": "5",
+        "MetricName": "ConsumedWriteCapacityUnits",
+        "Namespace": "AWS/DynamoDB",
+        "Period": "60",
+        "Statistic": "Sum",
+        "Threshold": "240.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:122974205253:dynamodb"
+        ],
+        "Dimensions": [
+          {
+            "Name": "TableName",
+            "Value": "Blips"
+          }
+        ]
+      }
+    },
+    "acl1": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "true",
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100",
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        }
+      }
+    },
+    "acl2": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100",
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        }
+      }
+    },
+    "subnetacl1": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1b"
+        }
+      }
+    },
+    "subnetacl2": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1f"
+        }
+      }
+    },
+    "subnetacl3": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1a"
+        }
+      }
+    },
+    "subnetacl4": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1e"
+        }
+      }
+    },
+    "subnetacl5": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1c"
+        }
+      }
+    },
+    "subnetacl6": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "NetACLS"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1d"
+        }
+      }
+    },
+    "gw1": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "subnetroute1": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1d"
+        }
+      }
+    },
+    "subnetroute3": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1f"
+        }
+      }
+    },
+    "subnetroute4": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1e"
+        }
+      }
+    },
+    "subnetroute5": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1c"
+        }
+      }
+    },
+    "subnetroute6": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1b"
+        }
+      }
+    },
+    "subnetroute7": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable-Public"
+        },
+        "SubnetId": {
+          "Ref": "Subnet-1a"
+        }
+      }
+    },
+    "route1": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "RouteTable-Private"
+        }
+      }
+    },
+    "route2": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "RouteTable-Public"
+        },
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      },
+      "DependsOn": "gw1"
+    },
+    "dchpassoc1": {
+      "Type": "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC-BlipApp"
+        },
+        "DhcpOptionsId": {
+          "Ref": "DHCPOpts"
+        }
+      }
+    },
+    "ingress1": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgBlipBuilderInternet"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "ingress2": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": {
+          "Ref": "sgdefault"
+        },
+        "SourceSecurityGroupOwnerId": "122974205253"
+      }
+    },
+    "egress1": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgBlipBuilderInternet"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "egress2": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    }
+  },
+  "Description": ""
+}

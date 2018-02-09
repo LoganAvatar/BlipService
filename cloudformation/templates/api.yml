@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  BlipServiceGateway:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Description: "The Blip Service API"
+      Name: "BlipServicex"
+  BlipGetResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      ParentId: !GetAtt BlipServiceGateway.RootResourceId
+      PathPart: "get"
+      RestApiId: !Ref BlipServiceGateway
+  BlipGetMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: POST
+      ResourceId: !Ref BlipGetResource
+      RestApiId: !Ref BlipServiceGateway
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:122974205253:function:BlipService/invocations
+        IntegrationResponses:
+        - StatusCode: 200
+      MethodResponses:
+      - StatusCode: 200

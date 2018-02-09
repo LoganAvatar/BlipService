@@ -1,0 +1,54 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This builds the Blips DynamoDB table",
+  "Resources": {
+    "tableBlips": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "Blips",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "blipid",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "username",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "blipid",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        },
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "username-blipid-index",
+            "KeySchema": [
+              {
+                "AttributeName": "username",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "blipid",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": "5",
+              "WriteCapacityUnits": "5"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

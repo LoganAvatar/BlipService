@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  BlipServiceLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BlipService
+      Handler: main
+      Runtime: go1.x
+      Role: arn:aws:iam::122974205253:role/BlipService
